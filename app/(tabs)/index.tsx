@@ -7,7 +7,9 @@ import {
   UPCOMING_SUBSCRIPTIONS,
 } from "@/constants/data";
 import { icons } from "@/constants/icons";
+import images from "@/constants/images";
 import { formatCurrency } from "@/lib/utils";
+import { useUser } from "@clerk/expo";
 import dayjs from "dayjs";
 import { styled } from "nativewind";
 import { useState } from "react";
@@ -20,6 +22,7 @@ export default function App() {
   const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<
     string | null
   >(null);
+  const { user } = useUser();
 
   const handleSubscriptionPress = (item: Subscription) => {
     const isExpanding = expandedSubscriptionId !== item.id;
@@ -27,6 +30,13 @@ export default function App() {
       currentId === item.id ? null : item.id,
     );
   };
+
+  // Get user display name: firstName, fullName, or email
+  const displayName =
+    user?.firstName ||
+    user?.fullName ||
+    user?.emailAddresses[0]?.emailAddress ||
+    "User";
 
   return (
     <SafeAreaView className="flex-1 bg-background p-5">
@@ -36,11 +46,11 @@ export default function App() {
             <View className="home-header">
               <View className="home-user">
                 <Image
-                  // source={user?.imageUrl ? { uri: user.imageUrl } : images.avatar}
-                  source={require("@/assets/images/avatar.png")}
+                  source={user?.imageUrl ? { uri: user.imageUrl } : images
+                  .avatar}
                   className="home-avatar"
                 />
-                <Text className="home-user-name">ZeinebHa</Text>
+                <Text className="home-user-name">{displayName}</Text>
               </View>
 
               <Pressable>
