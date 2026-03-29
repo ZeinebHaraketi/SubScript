@@ -1,24 +1,41 @@
-import { Link } from "expo-router";
-import { Text, View } from "react-native";
- 
+import { icons } from "@/constants/icons";
+import { styled } from "nativewind";
+import { FlatList, Image, Pressable, Text, View } from "react-native";
+import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
+
+const SafeAreaView = styled(RNSafeAreaView);
+
 export default function App() {
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text className="text-xl font-bold text-success">
-        Welcome to Nativewind!
-      </Text>
+    <SafeAreaView className="flex-1 bg-background p-5">
+      <FlatList
+        ListHeaderComponent={() => (
+          <>
+            <View className="home-header">
+              <View className="home-user">
+                <Image
+                  // source={user?.imageUrl ? { uri: user.imageUrl } : images.avatar}
+                  source={require('@/assets/images/avatar.png')}
+                  className="home-avatar"
+                />
+                <Text className="home-user-name">ZeinebHa</Text>
+              </View>
 
-      <Link href="/onboarding">
-        <Text className="mt-4 rounded-2xl bg-primary text-white p-4">Go to Onboarding</Text>
-      </Link>
-
-      <Link href="/(auth)/sign-in">
-        <Text className="mt-4 rounded-2xl bg-primary text-white p-4">Go to Sign In</Text>
-      </Link>
-
-      <Link href="/(auth)/sign-up">
-        <Text className="mt-4 rounded-2xl bg-primary text-white p-4">Go to Sign Up</Text>
-      </Link>
-    </View>
+              <Pressable>
+                <Image source={icons.add} className="home-add-icon" />
+              </Pressable>
+            </View>
+          </>
+        )}
+        data={[]}
+        // keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <></>}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <Text className="home-empty-state">No subscriptions yet.</Text>
+        }
+        contentContainerClassName="pb-30"
+      />
+    </SafeAreaView>
   );
 }
