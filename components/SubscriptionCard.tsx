@@ -73,7 +73,7 @@ const SubscriptionCard = ({
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {(category?.trim() || plan?.trim()) ?? "Not provided"}
+                  {category?.trim() || plan?.trim() || "Not provided"}
                 </Text>
               </View>
             </View>
