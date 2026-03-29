@@ -15,6 +15,7 @@ export default function App() {
               <View className="home-user">
                 <Image
                   // source={user?.imageUrl ? { uri: user.imageUrl } : images.avatar}
+                  source={require('@/assets/images/avatar.png')}
                   className="home-avatar"
                 />
                 <Text className="home-user-name">ZeinebHa</Text>
