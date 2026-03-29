@@ -1,34 +1,51 @@
+import CreateSubscriptionModal from "@/components/CreateSubscriptionModal";
 import ListHeading from "@/components/ListHeading";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import UpcomingSubscriptionCard from "@/components/UpcomingSubscriptionCard";
-import {
-  HOME_BALANCE,
-  HOME_SUBSCRIPTIONS,
-  UPCOMING_SUBSCRIPTIONS,
-} from "@/constants/data";
+import { HOME_BALANCE } from "@/constants/data";
 import { icons } from "@/constants/icons";
 import images from "@/constants/images";
+import "@/global.css";
+import { useSubscriptionStore } from "@/lib/subscriptionStore";
 import { formatCurrency } from "@/lib/utils";
 import { useUser } from "@clerk/expo";
 import dayjs from "dayjs";
 import { styled } from "nativewind";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FlatList, Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
-
 const SafeAreaView = styled(RNSafeAreaView);
 
 export default function App() {
+  const { user } = useUser();
   const [expandedSubscriptionId, setExpandedSubscriptionId] = useState<
     string | null
   >(null);
-  const { user } = useUser();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { subscriptions, addSubscription } = useSubscriptionStore();
+
+  // Get upcoming subscriptions (active subscriptions with renewal date within next 7 days)
+  const upcomingSubscriptions = useMemo(() => {
+    const now = dayjs();
+    const nextWeek = now.add(7, "days");
+    return subscriptions
+      .filter((sub) => {
+        if (sub.status !== "active" || !sub.renewalDate) return false;
+        const renewal = dayjs(sub.renewalDate);
+        return renewal.isAfter(now) && renewal.isBefore(nextWeek);
+      })
+      .sort((a, b) => dayjs(a.renewalDate!).diff(dayjs(b.renewalDate!)));
+  }, [subscriptions]);
 
   const handleSubscriptionPress = (item: Subscription) => {
     const isExpanding = expandedSubscriptionId !== item.id;
     setExpandedSubscriptionId((currentId) =>
       currentId === item.id ? null : item.id,
     );
+  };
+
+  const handleCreateSubscription = (newSubscription: Subscription) => {
+    addSubscription(newSubscription);
   };
 
   // Get user display name: firstName, fullName, or email
@@ -46,14 +63,15 @@ export default function App() {
             <View className="home-header">
               <View className="home-user">
                 <Image
-                  source={user?.imageUrl ? { uri: user.imageUrl } : images
-                  .avatar}
+                  source={
+                    user?.imageUrl ? { uri: user.imageUrl } : images.avatar
+                  }
                   className="home-avatar"
                 />
                 <Text className="home-user-name">{displayName}</Text>
               </View>
 
-              <Pressable>
+              <Pressable onPress={() => setIsModalVisible(true)}>
                 <Image source={icons.add} className="home-add-icon" />
               </Pressable>
             </View>
@@ -75,10 +93,24 @@ export default function App() {
               <ListHeading title="Upcoming" />
 
               <FlatList
-                data={UPCOMING_SUBSCRIPTIONS}
-                renderItem={({ item }) => (
-                  <UpcomingSubscriptionCard {...item} />
-                )}
+                data={upcomingSubscriptions}
+                renderItem={({ item }) => {
+                  const daysLeft = item.renewalDate
+                    ? Math.ceil(
+                        dayjs(item.renewalDate).diff(dayjs(), "day", true),
+                      )
+                    : 0;
+                  return (
+                    <UpcomingSubscriptionCard
+                      id={item.id}
+                      name={item.name}
+                      price={item.price}
+                      currency={item.currency}
+                      icon={item.icon}
+                      daysLeft={daysLeft}
+                    />
+                  );
+                }}
                 keyExtractor={(item) => item.id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -88,11 +120,12 @@ export default function App() {
                   </Text>
                 }
               />
-              <ListHeading title="All Subscriptions" />
             </View>
+
+            <ListHeading title="All Subscriptions" />
           </>
         )}
-        data={HOME_SUBSCRIPTIONS}
+        data={subscriptions}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <SubscriptionCard
@@ -108,6 +141,12 @@ export default function App() {
           <Text className="home-empty-state">No subscriptions yet.</Text>
         }
         contentContainerClassName="pb-30"
+      />
+
+      <CreateSubscriptionModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onSubmit={handleCreateSubscription}
       />
     </SafeAreaView>
   );
