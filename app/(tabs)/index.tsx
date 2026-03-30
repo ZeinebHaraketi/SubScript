@@ -29,13 +29,12 @@ export default function App() {
     const now = dayjs();
     const nextWeek = now.add(7, "days");
     return subscriptions
-      .filter(
-        (sub) =>
-          sub.status === "active" &&
-          dayjs(sub.renewalDate).isAfter(now) &&
-          dayjs(sub.renewalDate).isBefore(nextWeek),
-      )
-      .sort((a, b) => dayjs(a.renewalDate).diff(dayjs(b.renewalDate)));
+      .filter((sub) => {
+        if (sub.status !== "active" || !sub.renewalDate) return false;
+        const renewal = dayjs(sub.renewalDate);
+        return renewal.isAfter(now) && renewal.isBefore(nextWeek);
+      })
+      .sort((a, b) => dayjs(a.renewalDate!).diff(dayjs(b.renewalDate!)));
   }, [subscriptions]);
 
   const handleSubscriptionPress = (item: Subscription) => {
